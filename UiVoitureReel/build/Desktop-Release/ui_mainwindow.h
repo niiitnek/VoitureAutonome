@@ -33,8 +33,15 @@ public:
     QPushButton *bpOn;
     QSpacerItem *horizontalSpacer_2;
     QPushButton *bpOff;
+    QSpacerItem *horizontalSpacer_4;
     QSpacerItem *horizontalSpacer_3;
+    QPushButton *bpQuitter;
+    QSpacerItem *verticalSpacer_2;
+    QWidget *widgetCheckUp;
+    QPushButton *pushButton;
     QSpacerItem *verticalSpacer;
+    QWidget *widget;
+    QHBoxLayout *horizontalLayout_3;
     QWidget *widgetLidar;
     QWidget *widgetDroite;
     QVBoxLayout *verticalLayout_2;
@@ -57,6 +64,7 @@ public:
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
         widgetBP = new QWidget(widgetGauche);
         widgetBP->setObjectName(QString::fromUtf8("widgetBP"));
+        widgetBP->setMinimumSize(QSize(0, 100));
         widgetBP->setMaximumSize(QSize(16777215, 100));
         horizontalLayout_2 = new QHBoxLayout(widgetBP);
         horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
@@ -66,6 +74,7 @@ public:
 
         bpOn = new QPushButton(widgetBP);
         bpOn->setObjectName(QString::fromUtf8("bpOn"));
+        bpOn->setMinimumSize(QSize(60, 60));
 
         horizontalLayout_2->addWidget(bpOn);
 
@@ -75,26 +84,58 @@ public:
 
         bpOff = new QPushButton(widgetBP);
         bpOff->setObjectName(QString::fromUtf8("bpOff"));
+        bpOff->setMinimumSize(QSize(60, 60));
 
         horizontalLayout_2->addWidget(bpOff);
+
+        horizontalSpacer_4 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+
+        horizontalLayout_2->addItem(horizontalSpacer_4);
 
         horizontalSpacer_3 = new QSpacerItem(57, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
         horizontalLayout_2->addItem(horizontalSpacer_3);
 
+        bpQuitter = new QPushButton(widgetBP);
+        bpQuitter->setObjectName(QString::fromUtf8("bpQuitter"));
+        bpQuitter->setMinimumSize(QSize(0, 60));
+
+        horizontalLayout_2->addWidget(bpQuitter);
+
 
         verticalLayout->addWidget(widgetBP);
+
+        verticalSpacer_2 = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+
+        verticalLayout->addItem(verticalSpacer_2);
+
+        widgetCheckUp = new QWidget(widgetGauche);
+        widgetCheckUp->setObjectName(QString::fromUtf8("widgetCheckUp"));
+        widgetCheckUp->setMinimumSize(QSize(0, 100));
+        pushButton = new QPushButton(widgetCheckUp);
+        pushButton->setObjectName(QString::fromUtf8("pushButton"));
+        pushButton->setGeometry(QRect(30, 50, 81, 25));
+
+        verticalLayout->addWidget(widgetCheckUp);
 
         verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
 
         verticalLayout->addItem(verticalSpacer);
 
-        widgetLidar = new QWidget(widgetGauche);
+        widget = new QWidget(widgetGauche);
+        widget->setObjectName(QString::fromUtf8("widget"));
+        widget->setMinimumSize(QSize(300, 300));
+        horizontalLayout_3 = new QHBoxLayout(widget);
+        horizontalLayout_3->setObjectName(QString::fromUtf8("horizontalLayout_3"));
+        widgetLidar = new QWidget(widget);
         widgetLidar->setObjectName(QString::fromUtf8("widgetLidar"));
-        widgetLidar->setMinimumSize(QSize(250, 300));
-        widgetLidar->setMaximumSize(QSize(16777215, 300));
+        widgetLidar->setMinimumSize(QSize(250, 250));
+        widgetLidar->setMaximumSize(QSize(250, 250));
 
-        verticalLayout->addWidget(widgetLidar);
+        horizontalLayout_3->addWidget(widgetLidar);
+
+
+        verticalLayout->addWidget(widget);
 
 
         horizontalLayout->addWidget(widgetGauche);
@@ -129,6 +170,8 @@ public:
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "MainWindow", nullptr));
         bpOn->setText(QCoreApplication::translate("MainWindow", "ON", nullptr));
         bpOff->setText(QCoreApplication::translate("MainWindow", "OFF", nullptr));
+        bpQuitter->setText(QCoreApplication::translate("MainWindow", "QUITTER", nullptr));
+        pushButton->setText(QCoreApplication::translate("MainWindow", "PushButton", nullptr));
     } // retranslateUi
 
 };

@@ -5,14 +5,22 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    //vers pc dirigeant la voiture
-    , clientLidar("10.98.33.27",2000)            //lidar
-    , clientVoiture("10.98.33.27",2001)         //vitesse & angle des roues
-    , clientStartStop("10.98.33.27",2002)      //Boutons
-    , clientBatterie("10.98.33.27",2003)      //Batterie
-    //vers le test
+    //vers la voiture
+//     , clientLidar("192.168.1.15",4231)            //lidar
+//     , clientVoiture("192.168.1.15",1234)         //vitesse & angle des roues et boutons
+// //    , clientStartStop("192.168.1.15",1234)      //Boutons
+//     , clientBatterie("192.168.1.15",1235)      //Batterie
+//     , clientTFmini("192.168.1.15",1236)       //Lidar TFmini
+    //vers checkup (test)
+    , clientLidar("10.98.33.28",4231)            //lidar
+    , clientVoiture("10.98.33.28",1234)         //vitesse & angle des roues et boutons
+    , clientBatterie("10.98.33.28",1235)      //Batterie
+    , clientTFmini("10.98.33.28",1236)       //Lidar TFmini
 {
     ui->setupUi(this);
+
+    connect(ui->bpQuitter,&QPushButton::clicked,
+            this,&MainWindow::close);
 
     ui->widgetLidar->layout()->addWidget(&lidar);
     ui->widgetVoiture->layout()->addWidget(&voiture);
@@ -37,10 +45,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::bpStart_clicked()
 {
-    clientStartStop.sendDatas("START");
+    clientVoiture.sendDatas("START");
 }
 
 void MainWindow::bpStop_clicked()
 {
-    clientStartStop.sendDatas("STOP");
+    clientVoiture.sendDatas("STOP");
 }

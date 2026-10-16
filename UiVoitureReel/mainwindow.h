@@ -35,7 +35,8 @@ private:
 
     TCPclient clientLidar;
     TCPclient clientVoiture;
-    TCPclient clientStartStop;
+//    TCPclient clientStartStop;
     TCPclient clientBatterie;
+    TCPclient clientTFmini;
 };
 #endif // MAINWINDOW_H

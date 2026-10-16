@@ -3,7 +3,7 @@
 
 WidgetBatterie::WidgetBatterie(QWidget *parent)
     : QWidget(parent)
-    , tension(0)          // MODIF : 0 tant que la voiture n'a rien envoyé (avant : valeur au hasard)
+    , tension(0)          // 0 tant que la voiture n'a rien envoyé (avant : valeur au hasard)
 {}
 
 void WidgetBatterie::processTcpDatas(QString data) {

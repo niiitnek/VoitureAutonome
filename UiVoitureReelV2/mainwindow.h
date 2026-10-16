@@ -22,7 +22,6 @@ public:
     ~MainWindow() override;
 
 private slots:
-    // Slots pour les clics sur les boutons
     void bpStart_clicked();
     void bpStop_clicked();
 

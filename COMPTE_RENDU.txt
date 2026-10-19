@@ -1,0 +1,161 @@
+==============================================================================
+COMPTE RENDU - IHM DE SUPERVISION D'UNE VOITURE AUTONOME (Qt / C++)
+Projet : UiVoitureReelV2
+Date   : 19/10/2026
+==============================================================================
+
+
+1. OBJECTIF DU PROJET
+------------------------------------------------------------------------------
+Réaliser une interface Qt qui récupère, via le réseau, les informations d'une
+petite voiture autonome et les affiche en temps réel :
+
+  - les mesures du lidar 360 degrés        -> widgetLidar
+  - la vitesse et l'angle des roues        -> widgetVoiture
+  - le niveau de la batterie               -> widgetBatterie (à créer)
+  - les commandes START / STOP             -> boutons ON / OFF
+
+Toutes les données transitent par des objets TCPclient connectés à un serveur
+qui tourne côté voiture.
+
+
+2. ÉTAT DE DÉPART
+------------------------------------------------------------------------------
+  - MainWindow : un seul client actif (lidar) vers 10.98.33.12, port 2000.
+    Une adresse de simulateur (10.98.32.173, port 8882) était laissée en
+    commentaire.
+  - Les clients "vitesse & angle" (port 2001) et "start/stop" (port 2002),
+    ainsi que les connexions des boutons, étaient commentés ; les slots
+    bpStart_clicked() et bpStop_clicked() étaient vides.
+  - WidgetLidar et WidgetVoiture existaient déjà ; WidgetBatterie n'existait
+    pas.
+  - TCPclient : connexion bloquante (waitForConnected) et lecture brute des
+    données avec readAll().
+
+
+3. CHEMINEMENT DE TRAVAIL
+------------------------------------------------------------------------------
+
+3.1 Analyse du code de départ
+  Plusieurs points fragiles ont été relevés :
+  a) Connexion bloquante : le constructeur de TCPclient attend jusqu'à 3 s,
+     puis ReconnectConnectOrWait() boucle indéfiniment (avec sleep) si la
+     voiture est injoignable. L'interface ne s'affiche alors pas.
+  b) TCP est un flux : un message peut arriver en plusieurs morceaux ou
+     plusieurs messages peuvent arriver collés. Lire avec readAll() sans
+     découpage donne des affichages faux.
+  c) sendDatas() contenait du code inatteignable (appel placé après un
+     return) et envoyait la chaîne encapsulée par QDataStream.
+  d) Dans WidgetLidar, l'angle 0 degré était dessiné vers la droite ; si le
+     0 du capteur correspond à l'avant de la voiture, la carte est tournée
+     de 90 degrés.
+  e) Les boutons n'étaient pas reliés aux slots.
+
+3.2 Première série de propositions
+  - TCPclient non bloquant : connexion asynchrone, reconnexion automatique
+    toutes les 2 s (QTimer) et découpage des messages par '\n'.
+  - Création de WidgetBatterie (pile avec remplissage en pourcentage).
+  - MainWindow avec 4 clients (lidar, vitesse/angle, start/stop, batterie),
+    connexions vers les widgets et vers les boutons, et ajout de
+    widgetBatterie dans le fichier .ui.
+  - Hypothèses signalées comme non vérifiées : messages terminés par '\n',
+    commandes envoyées en texte brut, port de la batterie, orientation du
+    lidar.
+
+3.3 Simplification de la batterie
+  Une version plus simple du widgetBatterie a été demandée. Le fichier
+  widgetbatterie.h n'avait pas été transmis au premier envoi ; il a été
+  renvoyé ensuite avec le reste du projet.
+
+3.4 Version finale (ajustée avec le système réel)
+  Les commentaires laissés dans le code indiquent que le projet a été
+  confronté à la voiture réelle, ce qui a conduit aux choix suivants :
+
+  - PROTOCOLE : la voiture envoie ses messages avec QDataStream (longueur
+    puis caractères). La lecture brute donnait des caractères illisibles.
+    TCPclient relit donc les messages avec QDataStream en mode transaction
+    (version Qt_5_0) et envoie aussi ses commandes avec QDataStream en
+    Qt_5_0. L'hypothèse "'\n' + texte brut" de la première proposition
+    s'est donc révélée inadaptée, et le TCPclient non bloquant n'a pas
+    été retenu : le TCPclient d'origine a été conservé, corrigé pour le
+    protocole.
+  - RÉSEAU : le serveur est le PC qui dirige la voiture (192.168.1.15), avec
+    de nouveaux ports (voir section 4).
+  - AFFICHAGE : les trois widgets sont des membres de MainWindow, placés
+    dans les widgets du .ui grâce à des QVBoxLayout créés dans le code
+    (sans layout, layout() renvoyait nullptr et provoquait un plantage).
+  - LIDAR : correction de l'orientation (angle - 90 degrés) et voiture
+    dessinée à la verticale (rectangle 20 x 30).
+  - BATTERIE : version simplifiée qui travaille en tension (volts) et non
+    en pourcentage ; la tension est initialisée à 0 (elle avait une valeur
+    aléatoire auparavant).
+  - BOUTONS : renommés bpOn / bpOff dans le .ui et reliés aux slots
+    bpStart_clicked() / bpStop_clicked(), qui envoient "START" / "STOP".
+  - PROJET : modules network et fichiers widgetbatterie ajoutés au .pro.
+
+
+4. DESCRIPTION DE LA VERSION FINALE
+------------------------------------------------------------------------------
+
+4.1 Organisation de l'interface (mainwindow.ui)
+  - Colonne de gauche (widgetGauche, 400 px max) : boutons ON / OFF en haut,
+    widgetLidar en bas (300 px de haut).
+  - Colonne de droite (widgetDroite) : widgetVoiture, puis widgetBatterie
+    (200 px de haut max).
+
+4.2 Flux de données (IP du serveur : 192.168.1.15)
+
+  Client            Port   Contenu                       Destination
+  ----------------  -----  ----------------------------  ------------------
+  clientLidar       4321   360 distances séparées par    WidgetLidar
+                           des ";"
+  clientVoiture     1234   "vitesse;angle" (de -1 à 1)   WidgetVoiture
+  clientStartStop   1234   envoi de "START" / "STOP"     (commande)
+  clientBatterie    1235   tension en volts              WidgetBatterie
+
+4.3 Rôle des classes
+  - TCPclient : se connecte au serveur, reçoit des QString complets via
+    QDataStream (signal newDatas) et envoie des commandes (sendDatas).
+  - WidgetLidar : mémorise une distance par degré (360 valeurs) ; chaque
+    mesure est plafonnée à 3000 et tracée comme un trait depuis le centre
+    (échelle 1/4) ; la voiture est dessinée au centre.
+  - WidgetVoiture : affiche la vitesse et l'angle (bornés à [-1 ; 1]) et
+    dessine la voiture ; les roues avant tournent de angle x 30 degrés.
+  - WidgetBatterie : convertit la tension en pourcentage (6,0 V = 0 %,
+    8,4 V = 100 %), affiche 5 segments (vert ; orange sous 30 % ; rouge sous
+    15 %) et la tension en volts au centre.
+  - MainWindow : crée les 4 clients, place les widgets dans l'interface et
+    relie signaux et slots.
+
+
+5. POINTS D'ATTENTION ET PISTES D'AMÉLIORATION
+------------------------------------------------------------------------------
+  1) Connexion bloquante : les 4 clients sont construits avant l'affichage de
+     la fenêtre. Si la voiture est éteinte ou injoignable, chaque client peut
+     attendre 3 s puis tourner dans la boucle de ReconnectConnectOrWait() :
+     la fenêtre n'apparaît pas. Piste : connexion non bloquante avec
+     reconnexion par QTimer (signaux disconnected / errorOccurred), en
+     gardant la lecture QDataStream.
+  2) sendDatas() : l'appel à ReconnectConnectOrWait() placé après le return
+     n'est jamais exécuté (code mort) ; à supprimer ou à corriger.
+  3) clientVoiture et clientStartStop utilisent le même port (1234) : deux
+     connexions sur le même port. À confirmer que le serveur accepte
+     plusieurs clients sur ce port. Les messages reçus par clientStartStop
+     sont lus mais ne sont reliés à aucun widget.
+  4) Batterie : la plage 6,0 V - 8,4 V est une hypothèse de calibrage à
+     vérifier avec la batterie réelle. Tant qu'aucune mesure n'est reçue,
+     l'affichage indique 0,00 V.
+  5) widgetbatterie.h inclut tcpclient.h sans en avoir besoin.
+  6) WidgetLidar : le commentaire "un angle sur deux" est obsolète (la boucle
+     traite tous les angles) ; l'échelle est fixe.
+  7) Aucun indicateur d'état de connexion n'est affiché dans l'interface.
+
+
+6. CONCLUSION
+------------------------------------------------------------------------------
+L'application affiche désormais les trois types de données de la voiture
+(lidar, vitesse/angle, batterie) et permet d'envoyer les commandes START et
+STOP. Le point clé du travail a été de s'aligner sur le protocole réel du
+serveur (QDataStream, Qt_5_0) plutôt que sur les hypothèses initiales. Les
+principales améliorations restantes concernent la robustesse de la connexion
+réseau (section 5, points 1 à 3).
